@@ -134,7 +134,7 @@ async function handleSearch(event) {
   }
 }
 form.addEventListener('submit', handleSearch);
-
+// Load
 async function handleLoadMore(entries) {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
@@ -155,4 +155,4 @@ async function handleLoadMore(entries) {
         });
     }
   });
-}
+} 
