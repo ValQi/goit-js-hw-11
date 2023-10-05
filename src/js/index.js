@@ -15,7 +15,7 @@ const observer = new IntersectionObserver(handleLoadMore, {
   rootMargin: '0px',
   threshold: 0.5,
 });
-
+// Some casual staff
 export function displayImages(images, gallery) {
   images.forEach(image => {
     const photoCard = document.createElement('div');
@@ -76,21 +76,21 @@ export function displayImages(images, gallery) {
     propertiesContainer.appendChild(views);
     propertiesContainer.appendChild(comments);
     propertiesContainer.appendChild(downloads);
-
+// Values
     valuesContainer.appendChild(likesValue);
     valuesContainer.appendChild(viewsValue);
     valuesContainer.appendChild(commentsValue);
     valuesContainer.appendChild(downloadsValue);
-
+    // inof
     info.appendChild(propertiesContainer);
     info.appendChild(valuesContainer);
-
+// card
     photoCard.appendChild(imgLink); 
     photoCard.appendChild(info);
 
     gallery.appendChild(photoCard);
   });
-
+// LightBox
   const lightbox = new SimpleLightbox('.gallery a', {
     captionsData: 'alt',
     captionDelay: 250,
@@ -98,7 +98,7 @@ export function displayImages(images, gallery) {
 
   lightbox.refresh();
 }
-
+// handel-staff
 async function handleSearch(event) {
   event.preventDefault();
 
