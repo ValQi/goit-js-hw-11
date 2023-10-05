@@ -13,7 +13,6 @@ let currentQuery = '';
 const observer = new IntersectionObserver(handleLoadMore, {
   root: null,
   rootMargin: '0px',
-  threshold: 0.5,
 });
 // Some casual staff
 export function displayImages(images, gallery) {
@@ -138,6 +137,8 @@ form.addEventListener('submit', handleSearch);
 async function handleLoadMore(entries) {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
+      observer.unobserve(entry.target);
+      
       currentPage += 1; 
 
       searchImages(currentQuery, currentPage, gallery)
