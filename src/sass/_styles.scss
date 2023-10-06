@@ -17,7 +17,7 @@
     gap: 10px;
     max-width: 1200px;
     margin: 0 auto;
-    background-color: lightgrey;
+    background-color: rgba(63, 46, 46, 0.249);
   }
   .photo-card {
     margin-top: 20px;
@@ -55,5 +55,20 @@
     margin-top: 0;
   }
   .load-more {
-    display: none;
-  }
+    display: flex;
+    height: 40px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid rgba(27, 131, 145, 0.248);
+    background: rgba(90, 2, 80, 0);
+    margin: auto;
+    margin-top: 15px;
+    margin-bottom: 10px;
+    visibility: hidden;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.load-more.visible {
+    visibility: visible;
+}

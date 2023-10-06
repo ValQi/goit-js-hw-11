@@ -1,159 +1,120 @@
-
+import axios from 'axios';
 import Notiflix from 'notiflix';
-import { searchImages } from './pixabay-api.js';
-import SimpleLightbox from 'simplelightbox';
-import 'simplelightbox/dist/simple-lightbox.min.css';
 
-const form = document.getElementById('search-form');
+import '../sass/index.scss';
+const form = document.querySelector('#search-form');
 const gallery = document.querySelector('.gallery');
+const loadMoreButton = document.querySelector('.load-more');
+let lastQueryValue = null;
 
-let currentPage = 1;
-let currentQuery = '';
+let requestParams = {
+  searchText: null,
+  page: 0,
+  countPerPage: 40,
+};
 
-const observer = new IntersectionObserver(handleLoadMore, {
-  root: null,
-  rootMargin: '0px',
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+
+  const queryValue = e.target.elements.searchQuery.value;
+
+  if (lastQueryValue === queryValue) {
+    return;
+  } else {
+    clearGallery();
+    toggleShowMoreVisible(false);
+    lastQueryValue = queryValue;
+  }
+
+  requestParams.page = 1;
+  requestParams.searchText = queryValue;
+
+  const data = await fetchImages(requestParams);
+
+  showResult(data);
+  toggleShowMoreVisible(true);
 });
-// Some casual staff
-export function displayImages(images, gallery) {
-  images.forEach(image => {
-    const photoCard = document.createElement('div');
-    photoCard.classList.add('photo-card');
 
-    const imgLink = document.createElement('a'); 
-    imgLink.href = image.largeImageURL; 
+loadMoreButton.addEventListener('click', async () => {
+  requestParams.page++;
 
-    const img = document.createElement('img');
-    img.loading = 'lazy';
-    img.src = image.webformatURL;
-    img.alt = image.tags;
+  const data = await fetchImages(requestParams);
 
-    imgLink.appendChild(img); 
+  showResult(data);
 
-    const info = document.createElement('div');
-    info.classList.add('info');
+  const summaryImagesCount =
+    (requestParams.page - 1) * requestParams.countPerPage + data.hits.length;
 
-    const propertiesContainer = document.createElement('div');
-    propertiesContainer.classList.add('info-properties');
-
-    const valuesContainer = document.createElement('div');
-    valuesContainer.classList.add('info-values');
-
-    const likes = document.createElement('p');
-    likes.classList.add('info-item');
-    likes.innerHTML = `<b>Likes</b>`;
-
-    const views = document.createElement('p');
-    views.classList.add('info-item');
-    views.innerHTML = `<b>Views</b>`;
-
-    const comments = document.createElement('p');
-    comments.classList.add('info-item');
-    comments.innerHTML = `<b>Comments</b>`;
-
-    const downloads = document.createElement('p');
-    downloads.classList.add('info-item');
-    downloads.innerHTML = `<b>Downloads</b>`;
-
-    const likesValue = document.createElement('p');
-    likesValue.classList.add('info-value');
-    likesValue.innerText = image.likes;
-
-    const viewsValue = document.createElement('p');
-    viewsValue.classList.add('info-value');
-    viewsValue.innerText = image.views;
-
-    const commentsValue = document.createElement('p');
-    commentsValue.classList.add('info-value');
-    commentsValue.innerText = image.comments;
-
-    const downloadsValue = document.createElement('p');
-    downloadsValue.classList.add('info-value');
-    downloadsValue.innerText = image.downloads;
-
-    propertiesContainer.appendChild(likes);
-    propertiesContainer.appendChild(views);
-    propertiesContainer.appendChild(comments);
-    propertiesContainer.appendChild(downloads);
-// Values
-    valuesContainer.appendChild(likesValue);
-    valuesContainer.appendChild(viewsValue);
-    valuesContainer.appendChild(commentsValue);
-    valuesContainer.appendChild(downloadsValue);
-    // inof
-    info.appendChild(propertiesContainer);
-    info.appendChild(valuesContainer);
-// card
-    photoCard.appendChild(imgLink); 
-    photoCard.appendChild(info);
-
-    gallery.appendChild(photoCard);
-  });
-// LightBox
-  const lightbox = new SimpleLightbox('.gallery a', {
-    captionsData: 'alt',
-    captionDelay: 250,
-  });
-
-  lightbox.refresh();
-}
-// handel-staff
-async function handleSearch(event) {
-  event.preventDefault();
-
-
-  const searchQuery = form.searchQuery.value.trim();
-
-
-  if (!searchQuery) {
-    console.error('Please enter a search query.');
-    return; 
-  }
-
-  gallery.innerHTML = ''; 
-  currentQuery = form.searchQuery.value.trim(); 
-  currentPage = 1; 
-
-  try {
-    const { images, totalHits } = await searchImages(
-      currentQuery,
-      currentPage,
-      gallery
+  if (summaryImagesCount >= data.totalHits) {
+    toggleShowMoreVisible(false);
+    Notiflix.Notify.info(
+      "We're sorry, but you've reached the end of search results."
     );
+  }
+});
 
-    if (images.length > 0) {
-      Notiflix.Notify.success(`Hooray! We found ${totalHits} images.`);
+async function fetchImages(params) {
+  try {
+    let response = await axios.get('https://pixabay.com/api/', {
+      params: {
+        key: '39839158-8a8d39ceaa5479b3be9b78b67',
+        q: params.searchText,
+        image_type: 'photo',
+        orientation: 'horizontal',
+        safesearch: true,
+        page: params.page,
+        per_page: params.countPerPage,
+      },
+    });
+
+    if (response.data.total === 0) {
+      throw new Error();
     }
 
-    if (images.length > 0 && totalHits > images.length) {
-      observer.observe(document.querySelector('.photo-card:last-child'));
-    }
-  } catch (error) {
-    console.error('Error searching for images:', error);
+    return response.data;
+  } catch (e) {
+    Notiflix.Notify.failure(
+      'Sorry, there are no images matching your search query. Please try again.'
+    );
   }
 }
-form.addEventListener('submit', handleSearch);
-// Load
-async function handleLoadMore(entries) {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      observer.unobserve(entry.target);
-      
-      currentPage += 1; 
 
-      searchImages(currentQuery, currentPage, gallery)
-        .then(({ images, totalHits }) => {
-          if (images.length > 0) {
-            displayImages(images);
-          }
+function toggleShowMoreVisible(isVisible) {
+  loadMoreButton.classList.toggle('visible', isVisible);
+}
 
-          if (totalHits <= currentPage * 40) {
-            observer.unobserve(entry.target);
-          }
-        })
-        .catch(error => {
-          console.error('Error loading more images:', error);
-        });
-    }
-  });
-} 
+function clearGallery() {
+  gallery.innerHTML = '';
+}
+
+function showResult(resultData) {
+  const { hits } = resultData;
+
+  const hitsStrings = hits.map(
+    hit => `
+      <div class="photo-card">
+        <img class="image-preview" src="${hit.webformatURL}" alt="${hit.tags}" loading="lazy" />
+        <div class="info">
+          <p class="info-item">
+            <b>Likes</b>
+            <span>${hit.likes}</span>
+          </p>
+          <p class="info-item">
+            <b>Views</b>
+            <span>${hit.views}</span>
+          </p>
+          <p class="info-item">
+            <b>Comments</b>
+            <span>${hit.comments}</span>
+          </p>
+          <p class="info-item">
+            <b>Downloads</b>
+            <span>${hit.downloads}</span>
+          </p>
+        </div>
+      </div>
+  `
+  );
+
+  gallery.insertAdjacentHTML('beforeend', hitsStrings.join(''));
+}
